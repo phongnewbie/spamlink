@@ -10,6 +10,7 @@ const VisitInfo = require("./models/VisitInfo");
 const auth = require("./middleware/auth");
 const geoip = require("geoip-lite");
 const axios = require("axios");
+const path = require("path");
 
 dotenv.config();
 
@@ -99,6 +100,16 @@ app.use((req, res, next) => {
     }
   }
   next();
+});
+
+// Serve static files from the React app
+app.use(express.static(path.join(__dirname, "../frontend/customerweb/build")));
+
+// Root route handler
+app.get("/", (req, res) => {
+  res.sendFile(
+    path.join(__dirname, "../frontend/customerweb/build", "index.html")
+  );
 });
 
 // Routes
