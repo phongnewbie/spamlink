@@ -80,11 +80,19 @@ const Profile = () => {
 
   // Fetch user's links and stats, and update URLs with new subdomains
   useEffect(() => {
+    // Initial fetch
     fetchData();
     fetchStats();
-    // Refresh stats more frequently (every 10 seconds) to catch new visits
-    const interval = setInterval(fetchData, 10000);
-    return () => clearInterval(interval);
+
+    // Set up interval for periodic updates
+    const dataInterval = setInterval(fetchData, 10000);
+    const statsInterval = setInterval(fetchStats, 10000);
+
+    // Cleanup intervals on component unmount
+    return () => {
+      clearInterval(dataInterval);
+      clearInterval(statsInterval);
+    };
   }, []);
 
   const handleChange = (e) => {
@@ -296,9 +304,6 @@ const Profile = () => {
     }
   };
 
-  if (loading) return <div>Loading...</div>;
-  if (error) return <div className="error">{error}</div>;
-
   return (
     <div className="profile-page">
       <div className="profile-header">
@@ -306,6 +311,8 @@ const Profile = () => {
           Xin chào {user?.username} - Số link đã tạo: {links.length}
         </h2>
       </div>
+
+      {error && <div className="error">{error}</div>}
 
       <div className="warning-message">
         Lưu ý! Subdomain nào không dùng vui lòng xoá bớt đi để tránh bị chặn ko
