@@ -41,6 +41,13 @@ const VisitInfoSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    via: {
+      browser: String,
+      platform: String,
+      mobile: String,
+      language: String,
+      referrer: String,
+    },
     createdAt: {
       type: Date,
       default: Date.now,
@@ -49,8 +56,9 @@ const VisitInfoSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// Index để tối ưu query
+// Indexes for faster queries
 VisitInfoSchema.index({ link: 1, country: 1 });
 VisitInfoSchema.index({ createdAt: -1 });
+VisitInfoSchema.index({ ip: 1 });
 
 module.exports = mongoose.model("VisitInfo", VisitInfoSchema);

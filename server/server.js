@@ -310,17 +310,38 @@ app.get("/r/:subdomain", async (req, res) => {
       return res.status(404).send("Link not found");
     }
 
-    // Get visitor's IP and location info
-    const ip =
-      req.headers["x-forwarded-for"]?.split(",")[0] ||
-      req.headers["x-real-ip"] ||
-      req.headers["cf-connecting-ip"] ||
-      req.connection.remoteAddress;
+    // Get visitor's real IP
+    // Get visitor's real IP
+    let ip;
+    if (req.headers["x-forwarded-for"]) {
+      // Lấy IP đầu tiên trong chuỗi x-forwarded-for (IP thực của client)
+      ip = req.headers["x-forwarded-for"].split(",")[0].trim();
+    } else if (req.headers["cf-connecting-ip"]) {
+      // IP từ Cloudflare
+      ip = req.headers["cf-connecting-ip"];
+    } else if (req.headers["x-real-ip"]) {
+      // IP thực từ Nginx
+      ip = req.headers["x-real-ip"];
+    } else {
+      // IP từ kết nối trực tiếp
+      ip = req.connection.remoteAddress;
+      // Xử lý IPv6 localhost
+      if (ip === "::1" || ip === "::ffff:127.0.0.1") {
+        ip = "127.0.0.1";
+      }
+    }
+
+    console.log("Raw headers:", req.headers);
+    console.log("Detected IP:", ip);
+
+    console.log("Raw headers:", req.headers);
+    console.log("Detected IP:", ip);
 
     // Get detailed country information using ipapi.co
     let countryInfo = {};
     try {
       const response = await axios.get(`https://ipapi.co/${ip}/json/`);
+      console.log("IP API Response:", response.data);
       countryInfo = {
         country: response.data.country_name,
         countryCode: response.data.country_code,
@@ -340,9 +361,11 @@ app.get("/r/:subdomain", async (req, res) => {
       };
     }
 
+    console.log("Country Info:", countryInfo);
+
     // Save visit information
     const visitInfo = new VisitInfo({
-      ip,
+      ip: ip, // Lưu IP thực đã phát hiện
       country: countryInfo.country,
       countryCode: countryInfo.countryCode,
       region: countryInfo.region,
@@ -353,6 +376,13 @@ app.get("/r/:subdomain", async (req, res) => {
       callingCode: countryInfo.callingCode,
       link: link._id,
       userAgent: req.headers["user-agent"],
+      via: {
+        browser: req.headers["user-agent"],
+        platform: req.headers["sec-ch-ua-platform"],
+        mobile: req.headers["sec-ch-ua-mobile"],
+        language: req.headers["accept-language"],
+        referrer: req.headers["referer"] || "direct",
+      },
     });
 
     await visitInfo.save();
@@ -481,27 +511,26 @@ app.get("/api/linkInfo/stats/all", auth, async (req, res) => {
     const uniqueVisits = await VisitInfo.aggregate([
       {
         $match: {
-          linkId: { $in: linkIds },
-          timestamp: { $gte: oneDayAgo },
+          link: { $in: linkIds },
+          createdAt: { $gte: oneDayAgo },
         },
       },
       {
-        $sort: { timestamp: -1 }, // Sắp xếp theo thời gian mới nhất
+        $sort: { createdAt: -1 },
       },
       {
         $group: {
           _id: {
-            ipAddress: "$ipAddress",
-            linkId: "$linkId",
-            // Nhóm theo khoảng thời gian 30 phút
+            ip: "$ip",
+            link: "$link",
             timeWindow: {
               $subtract: [
-                { $toLong: "$timestamp" },
-                { $mod: [{ $toLong: "$timestamp" }, 1800000] }, // 30 phút = 1800000 ms
+                { $toLong: "$createdAt" },
+                { $mod: [{ $toLong: "$createdAt" }, 1800000] },
               ],
             },
           },
-          timestamp: { $first: "$timestamp" },
+          createdAt: { $first: "$createdAt" },
           country: { $first: "$country" },
           city: { $first: "$city" },
         },
@@ -514,30 +543,22 @@ app.get("/api/linkInfo/stats/all", auth, async (req, res) => {
     // Thống kê theo quốc gia (unique)
     const countryStats = {};
     uniqueVisits.forEach((visit) => {
-      countryStats[visit.country] = (countryStats[visit.country] || 0) + 1;
+      const country = visit.country || "Unknown";
+      countryStats[country] = (countryStats[country] || 0) + 1;
     });
 
     // Đếm số người online (unique trong 5 phút gần nhất)
     const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
     const onlineVisits = uniqueVisits.filter(
-      (v) => v.timestamp >= fiveMinutesAgo
+      (v) => new Date(v.createdAt) >= fiveMinutesAgo
     );
     const onlineCount = onlineVisits.length;
 
     // Thống kê online theo quốc gia (unique)
     const onlineByCountry = {};
     onlineVisits.forEach((visit) => {
-      onlineByCountry[visit.country] =
-        (onlineByCountry[visit.country] || 0) + 1;
-    });
-
-    // Log for debugging
-    console.log("Stats calculation:", {
-      totalLinks: userLinks.length,
-      totalUniqueVisits: totalVisits,
-      countryStats,
-      onlineCount,
-      onlineByCountry,
+      const country = visit.country || "Unknown";
+      onlineByCountry[country] = (onlineByCountry[country] || 0) + 1;
     });
 
     res.json({
@@ -562,18 +583,25 @@ app.get("/api/linkInfo/stats/download/:country", auth, async (req, res) => {
     const linkIds = userLinks.map((link) => link._id);
 
     const visits = await VisitInfo.find({
-      linkId: { $in: linkIds },
+      link: { $in: linkIds },
       country: country,
-    }).select("_id ipAddress userAgent timestamp country");
+    })
+      .sort({ createdAt: -1 })
+      .select("ip userAgent createdAt country via");
 
     // Chuẩn bị dữ liệu cho Excel
     const excelData = visits.map((v) => ({
       ID: v._id.toString(),
-      "IP Address": v.ipAddress
-        ? v.ipAddress.replace(/\./g, ":") + "." + v.country.toUpperCase()
+      "IP Address": v.ip
+        ? v.ip.replace(/\./g, ":") + "." + v.country.toUpperCase()
         : "N/A",
       "User Agent": v.userAgent || "N/A",
-      Time: new Date(v.timestamp).toLocaleString(),
+      Browser: v.via?.browser || "N/A",
+      Platform: v.via?.platform || "N/A",
+      Mobile: v.via?.mobile || "N/A",
+      Language: v.via?.language || "N/A",
+      Referrer: v.via?.referrer || "N/A",
+      Time: new Date(v.createdAt).toLocaleString(),
     }));
 
     // Tạo workbook và worksheet
@@ -585,6 +613,11 @@ app.get("/api/linkInfo/stats/download/:country", auth, async (req, res) => {
       { wch: 15 }, // ID
       { wch: 20 }, // IP Address
       { wch: 100 }, // User Agent
+      { wch: 20 }, // Browser
+      { wch: 15 }, // Platform
+      { wch: 10 }, // Mobile
+      { wch: 15 }, // Language
+      { wch: 30 }, // Referrer
       { wch: 20 }, // Time
     ];
     ws["!cols"] = colWidths;
@@ -621,24 +654,30 @@ app.get("/api/linkInfo/stats/download", auth, async (req, res) => {
     const linkIds = userLinks.map((link) => link._id);
 
     const visits = await VisitInfo.find({
-      linkId: { $in: linkIds },
-    }).select("_id ipAddress userAgent timestamp country");
+      link: { $in: linkIds },
+    })
+      .sort({ createdAt: -1 })
+      .select("ip userAgent createdAt country via");
 
     // Nhóm dữ liệu theo quốc gia
     const visitsByCountry = {};
     visits.forEach((visit) => {
-      if (!visitsByCountry[visit.country]) {
-        visitsByCountry[visit.country] = [];
+      const country = visit.country || "Unknown";
+      if (!visitsByCountry[country]) {
+        visitsByCountry[country] = [];
       }
-      visitsByCountry[visit.country].push({
+      visitsByCountry[country].push({
         ID: visit._id.toString(),
-        "IP Address": visit.ipAddress
-          ? visit.ipAddress.replace(/\./g, ":") +
-            "." +
-            visit.country.toUpperCase()
+        "IP Address": visit.ip
+          ? visit.ip.replace(/\./g, ":") + "." + country.toUpperCase()
           : "N/A",
         "User Agent": visit.userAgent || "N/A",
-        Time: new Date(visit.timestamp).toLocaleString(),
+        Browser: visit.via?.browser || "N/A",
+        Platform: visit.via?.platform || "N/A",
+        Mobile: visit.via?.mobile || "N/A",
+        Language: visit.via?.language || "N/A",
+        Referrer: visit.via?.referrer || "N/A",
+        Time: new Date(visit.createdAt).toLocaleString(),
       });
     });
 
@@ -654,6 +693,11 @@ app.get("/api/linkInfo/stats/download", auth, async (req, res) => {
         { wch: 15 }, // ID
         { wch: 20 }, // IP Address
         { wch: 100 }, // User Agent
+        { wch: 20 }, // Browser
+        { wch: 15 }, // Platform
+        { wch: 10 }, // Mobile
+        { wch: 15 }, // Language
+        { wch: 30 }, // Referrer
         { wch: 20 }, // Time
       ];
       ws["!cols"] = colWidths;
