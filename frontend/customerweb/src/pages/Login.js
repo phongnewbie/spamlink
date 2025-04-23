@@ -19,20 +19,21 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const res = await axios.post(
-        "http://localhost:5000/api/login",
-        formData,
-        {
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
+      const response = await axios.post(
+        "https://spamlink.onrender.com/api/login",
+        formData
       );
-      localStorage.setItem("token", res.data.token);
-      login(res.data);
-      navigate("/profile");
+
+      if (response.data.token) {
+        localStorage.setItem("token", response.data.token);
+        login(response.data);
+        navigate("/profile");
+      }
     } catch (err) {
-      setError(err.response?.data?.message || "An error occurred");
+      console.error("Login error:", err);
+      setError(
+        err.response?.data?.message || "Đăng nhập thất bại. Vui lòng thử lại."
+      );
     }
   };
 

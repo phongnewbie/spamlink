@@ -169,14 +169,18 @@ app.post("/api/login", async (req, res) => {
     const user = await User.findOne({ email });
     if (!user) {
       console.log("User not found:", { email });
-      return res.status(401).json({ message: "Invalid credentials" });
+      return res
+        .status(401)
+        .json({ message: "Email hoặc mật khẩu không đúng" });
     }
 
     // Check password
     const isMatch = await user.comparePassword(password);
     if (!isMatch) {
       console.log("Invalid password for user:", { email });
-      return res.status(401).json({ message: "Invalid credentials" });
+      return res
+        .status(401)
+        .json({ message: "Email hoặc mật khẩu không đúng" });
     }
 
     // Generate token
@@ -186,7 +190,7 @@ app.post("/api/login", async (req, res) => {
 
     console.log("Login successful:", { email });
     res.json({
-      message: "Login successful",
+      message: "Đăng nhập thành công",
       token,
       user: {
         id: user._id,
@@ -195,8 +199,18 @@ app.post("/api/login", async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("Login error:", error);
-    res.status(500).json({ message: "Error logging in", error: error.message });
+    console.error("Login error details:", {
+      message: error.message,
+      stack: error.stack,
+      name: error.name,
+    });
+    res.status(500).json({
+      message: "Lỗi đăng nhập",
+      error:
+        process.env.NODE_ENV === "development"
+          ? error.message
+          : "Vui lòng thử lại sau",
+    });
   }
 });
 

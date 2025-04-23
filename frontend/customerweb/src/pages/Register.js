@@ -20,31 +20,19 @@ const Register = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const apiUrl =
-        process.env.NODE_ENV === "production"
-          ? `${window.location.origin}/api/register`
-          : "http://localhost:5000/api/register";
+      const response = await axios.post(
+        "https://spamlink.onrender.com/api/register",
+        formData
+      );
 
-      const response = await axios({
-        method: "post",
-        url: apiUrl,
-        data: formData,
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-        },
-      });
-
-      if (response.status === 201) {
-        setError("Registration successful! Please login.");
-        setTimeout(() => {
-          navigate("/login");
-        }, 2000);
+      if (response.data.token) {
+        localStorage.setItem("token", response.data.token);
+        navigate("/profile");
       }
     } catch (err) {
       console.error("Registration error:", err);
       setError(
-        err.response?.data?.error || "Registration failed. Please try again."
+        err.response?.data?.message || "Đăng ký thất bại. Vui lòng thử lại."
       );
     }
   };
