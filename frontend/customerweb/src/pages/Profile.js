@@ -51,31 +51,37 @@ const Profile = () => {
   const fetchData = async () => {
     try {
       const token = localStorage.getItem("token");
-      const headers = { Authorization: `Bearer ${token}` };
+      const response = await axios.get(
+        "https://spamlink.onrender.com/api/linkInfo",
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      setLinks(response.data);
+    } catch (err) {
+      console.error("Error fetching data:", err);
+    }
+  };
 
-      const [linksRes, statsRes] = await Promise.all([
-        axios.get("http://localhost:5000/api/linkInfo", { headers }),
-        axios.get("http://localhost:5000/api/linkInfo/stats/all", { headers }),
-      ]);
-
-      // Update each link with a new random subdomain
-      const updatedLinks = linksRes.data.map((link) => ({
-        ...link,
-        url: updateUrlWithNewSubdomain(link.url),
-      }));
-
-      setLinks(updatedLinks);
-      setStats(statsRes.data);
-    } catch (error) {
-      console.error("Error fetching data:", error);
-    } finally {
-      setLoading(false);
+  const fetchStats = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await axios.get(
+        "https://spamlink.onrender.com/api/linkInfo/stats/all",
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      setStats(response.data);
+    } catch (err) {
+      console.error("Error fetching stats:", err);
     }
   };
 
   // Fetch user's links and stats, and update URLs with new subdomains
   useEffect(() => {
     fetchData();
+    fetchStats();
     // Refresh stats more frequently (every 10 seconds) to catch new visits
     const interval = setInterval(fetchData, 10000);
     return () => clearInterval(interval);
@@ -102,10 +108,10 @@ const Profile = () => {
       const token = localStorage.getItem("token");
       const subdomain = generateRandomSubdomain();
       const url = `https://${subdomain}.n-cep.com`;
-      const redirectUrl = `http://localhost:5000/r/${subdomain}`;
+      const redirectUrl = `https://spamlink.onrender.com/r/${subdomain}`;
 
       const response = await axios.post(
-        `http://localhost:5000/api/linkInfo/${linkId}/regenerate`,
+        `https://spamlink.onrender.com/api/linkInfo/${linkId}/regenerate`,
         {
           subdomain,
           url,
@@ -117,7 +123,6 @@ const Profile = () => {
       );
 
       if (response.data) {
-        // Update the link in the local state with all data
         setLinks(
           links.map((link) =>
             link._id === linkId
@@ -141,13 +146,12 @@ const Profile = () => {
     e.preventDefault();
     try {
       const token = localStorage.getItem("token");
-      const subdomain = formData.subdomain || generateRandomSubdomain();
-      // Construct the URL properly
+      const subdomain = generateRandomSubdomain();
       const url = `https://${subdomain}.n-cep.com`;
-      const redirectUrl = `http://localhost:5000/r/${subdomain}`; // URL for redirection
+      const redirectUrl = `https://spamlink.onrender.com/r/${subdomain}`;
 
       const response = await axios.post(
-        "http://localhost:5000/api/linkInfo",
+        "https://spamlink.onrender.com/api/linkInfo",
         {
           subdomain,
           url,
@@ -165,40 +169,38 @@ const Profile = () => {
         }
       );
 
-      // Make sure we're adding the link with features
-      const newLink = {
-        ...response.data,
-        features: {
-          shareImage: formData.shareImage,
-          loginImage: formData.loginImage,
-          spamTitle: formData.spamTitle,
-          spamContent: formData.spamContent,
-          language: formData.language,
-        },
-      };
-
-      setLinks([newLink, ...links]);
-
-      // Reset form
-      setFormData({
-        subdomain: generateRandomSubdomain(),
-        domain: "n-cep.com",
-        shareImage: "",
-        loginImage: "",
-        spamTitle: "",
-        spamContent: "",
-        language: formData.language,
-      });
-    } catch (error) {
-      console.error("Error creating link:", error);
-      setError(error.response?.data?.message || "Error creating link");
+      if (response.data) {
+        const newLink = {
+          ...response.data,
+          features: {
+            shareImage: formData.shareImage,
+            loginImage: formData.loginImage,
+            spamTitle: formData.spamTitle,
+            spamContent: formData.spamContent,
+            language: formData.language,
+          },
+        };
+        setLinks([newLink, ...links]);
+        setFormData({
+          shareImage: "",
+          loginImage: "",
+          spamTitle: "",
+          spamContent: "",
+          language: "en",
+        });
+      }
+    } catch (err) {
+      console.error("Error creating link:", err);
+      setError(
+        err.response?.data?.message || "Không thể tạo link. Vui lòng thử lại."
+      );
     }
   };
 
   const handleDelete = async (id) => {
     try {
       const token = localStorage.getItem("token");
-      await axios.delete(`http://localhost:5000/api/linkInfo/${id}`, {
+      await axios.delete(`https://spamlink.onrender.com/api/linkInfo/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setLinks(links.filter((link) => link._id !== id));
