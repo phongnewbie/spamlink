@@ -1,0 +1,404 @@
+.profile-page {
+  padding: 20px;
+  max-width: 1600px;
+  margin: 0 auto;
+}
+
+.profile-header {
+  margin-bottom: 20px;
+}
+
+.warning-message {
+  background-color: #ffebee;
+  color: #c62828;
+  padding: 15px;
+  border-radius: 4px;
+  margin-bottom: 20px;
+}
+
+.update-message {
+  background-color: #e8f5e9;
+  color: #2e7d32;
+  padding: 15px;
+  border-radius: 4px;
+  margin-bottom: 20px;
+}
+
+/* Container cho form và bảng */
+.content-container {
+  display: flex;
+  gap: 20px;
+  align-items: flex-start;
+  margin-bottom: 30px;
+}
+
+.create-link-form {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  flex: 0 0 350px;
+  position: sticky;
+  top: 20px;
+}
+
+.links-table {
+  flex: 1;
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.form-group {
+  margin-bottom: 15px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: 500;
+}
+
+.form-group input,
+.form-group select {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.create-button {
+  background-color: #4caf50;
+  color: white;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  width: 100%;
+  font-size: 16px;
+}
+
+.create-button:hover {
+  background-color: #45a049;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th,
+td {
+  padding: 12px;
+  text-align: left;
+}
+
+th {
+  background-color: #f5f5f5;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.preview-image {
+  width: 50px;
+  height: 50px;
+  object-fit: cover;
+  border-radius: 4px;
+}
+
+.delete-button {
+  background-color: #f44336;
+  color: white;
+  padding: 6px 12px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.delete-button:hover {
+  background-color: #d32f2f;
+}
+
+input[readonly] {
+  background-color: #f5f5f5;
+  cursor: not-allowed;
+}
+
+/* Stats Section Styles */
+.stats-section {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  margin-top: 30px;
+}
+
+.stats-header {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  margin-bottom: 30px;
+  padding: 20px;
+  background: #f8f9fa;
+  border-radius: 8px;
+}
+
+.total-visits-header {
+  font-size: 18px;
+  color: #333;
+}
+
+.visits-count {
+  color: #2196f3;
+  font-weight: 600;
+  font-size: 24px;
+  margin-left: 8px;
+}
+
+.download-all,
+.clear-all {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.download-all {
+  background-color: #4caf50;
+  color: white;
+}
+
+.clear-all {
+  background-color: #f44336;
+  color: white;
+}
+
+.stats-content {
+  display: flex;
+  gap: 30px;
+}
+
+/* Country Stats Styles */
+.country-stats-list {
+  flex: 2;
+  padding-right: 30px;
+  border-right: 1px solid #eee;
+}
+
+.country-stat-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px;
+  margin-bottom: 8px;
+  background: #f8f9fa;
+  border-radius: 6px;
+  transition: all 0.3s ease;
+}
+
+.country-stat-item:hover {
+  background: #e9ecef;
+}
+
+.country-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.country-code {
+  font-weight: 600;
+  color: #2196f3;
+  min-width: 60px;
+}
+
+.country-count {
+  color: #666;
+}
+
+.download-country {
+  padding: 6px 12px;
+  background: #2196f3;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+  transition: background 0.3s ease;
+}
+
+.download-country:hover {
+  background: #1976d2;
+}
+
+/* Online Stats Styles */
+.online-stats {
+  flex: 1;
+  padding-left: 30px;
+}
+
+.online-stats h3 {
+  margin-bottom: 20px;
+  color: #333;
+}
+
+.online-count {
+  margin-bottom: 15px;
+  font-size: 16px;
+}
+
+.online-count .highlight {
+  color: #2196f3;
+  font-weight: 600;
+  font-size: 20px;
+}
+
+.online-country-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px;
+  margin-bottom: 8px;
+  background: #f8f9fa;
+  border-radius: 6px;
+}
+
+.online-country-item .country-code {
+  color: #2196f3;
+  font-weight: 600;
+}
+
+.online-country-item .online-count {
+  color: #666;
+  margin: 0;
+  font-size: 14px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 1200px) {
+  .content-container {
+    flex-direction: column;
+  }
+
+  .create-link-form {
+    position: static;
+    width: 100%;
+    flex: none;
+  }
+
+  .links-table {
+    width: 100%;
+    overflow-x: auto;
+  }
+
+  .stats-content {
+    flex-direction: column;
+  }
+
+  .country-stats-list {
+    padding-right: 0;
+    border-right: none;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 20px;
+    margin-bottom: 20px;
+  }
+
+  .online-stats {
+    padding-left: 0;
+  }
+}
+
+@media (max-width: 768px) {
+  .profile-page {
+    padding: 10px;
+  }
+
+  .stats-content {
+    flex-direction: column;
+  }
+
+  .country-stats-list {
+    padding-right: 0;
+    border-right: none;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 20px;
+    margin-bottom: 20px;
+  }
+
+  .online-stats {
+    padding-left: 0;
+  }
+
+  .stats-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 15px;
+  }
+
+  th,
+  td {
+    padding: 8px;
+    font-size: 14px;
+  }
+
+  .preview-image {
+    width: 40px;
+    height: 40px;
+  }
+}
+
+.subdomain-group {
+  display: flex;
+  gap: 10px;
+}
+
+.subdomain-group input {
+  flex: 1;
+}
+
+.generate-button {
+  padding: 8px 16px;
+  background: #2196f3;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.generate-button:hover {
+  background: #1976d2;
+}
+
+.link-cell {
+  margin-top: 15px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.link-cell input {
+  flex: 1;
+}
+
+.regenerate-button {
+  padding: 4px 8px;
+  background: #2196f3;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 16px;
+  line-height: 1;
+  min-width: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.regenerate-button:hover {
+  background: #1976d2;
+}
