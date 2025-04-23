@@ -33,15 +33,34 @@ app.options("*", cors(corsOptions));
 
 // MongoDB connection
 const MONGODB_URI =
-  process.env.MONGODBI || "mongodb://localhost:27017/spamlink";
+  process.env.MONGODB_URI ||
+  process.env.MONGODBI ||
+  "mongodb://localhost:27017/spamlink";
+
+console.log(
+  "Attempting to connect to MongoDB with URI:",
+  MONGODB_URI.replace(
+    /mongodb\+srv:\/\/([^:]+):([^@]+)@/,
+    "mongodb+srv://[username]:[password]@"
+  )
+);
 
 mongoose
   .connect(MONGODB_URI, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
+    retryWrites: true,
+    w: "majority",
   })
-  .then(() => console.log("MongoDB connected"))
-  .catch((err) => console.error("MongoDB connection error:", err));
+  .then(() => console.log("MongoDB connected successfully"))
+  .catch((err) => {
+    console.error("MongoDB connection error details:", {
+      message: err.message,
+      code: err.code,
+      name: err.name,
+      stack: err.stack,
+    });
+  });
 
 // Add security headers middleware
 app.use((req, res, next) => {
