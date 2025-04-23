@@ -784,6 +784,55 @@ app.get("/api/links/:linkId/stats", auth, async (req, res) => {
   }
 });
 
+// Regenerate link with same features
+app.put("/api/linkInfo/:id", auth, async (req, res) => {
+  try {
+    const linkId = req.params.id;
+    const { subdomain, url } = req.body;
+
+    // Find original link and verify ownership
+    const originalLink = await LinkInfo.findOne({
+      _id: linkId,
+      userId: req.user.userId,
+    });
+
+    if (!originalLink) {
+      return res.status(404).json({ message: "Link not found" });
+    }
+
+    // Check if new subdomain already exists
+    const existingLink = await LinkInfo.findOne({ subdomain });
+    if (existingLink && existingLink._id.toString() !== linkId) {
+      return res.status(400).json({ message: "Subdomain already exists" });
+    }
+
+    // Create new link with same features
+    const updatedLink = await LinkInfo.findByIdAndUpdate(
+      linkId,
+      {
+        $set: {
+          subdomain: subdomain,
+          url: url,
+          originalUrl: originalLink.originalUrl,
+          features: originalLink.features, // Giữ nguyên các features từ link gốc
+          updatedAt: new Date(),
+        },
+      },
+      { new: true }
+    );
+
+    res.json({
+      message: "Link regenerated successfully",
+      link: updatedLink,
+    });
+  } catch (error) {
+    console.error("Error regenerating link:", error);
+    res
+      .status(500)
+      .json({ message: "Error regenerating link", error: error.message });
+  }
+});
+
 // Catch-all route for serving the React app
 // This MUST be AFTER all other API and specific routes
 app.get("*", (req, res) => {
