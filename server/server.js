@@ -740,7 +740,15 @@ app.get("/api/links/:linkId/stats", auth, async (req, res) => {
   }
 });
 
+// Catch-all route for serving the React app
+// This MUST be AFTER all other API and specific routes
+app.get("*", (req, res) => {
+  res.sendFile(
+    path.join(__dirname, "../frontend/customerweb/build", "index.html")
+  );
+});
+
 // Start server
 app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
+  console.log(`Server running on port ${PORT}`);
 });
