@@ -115,17 +115,15 @@ const Profile = () => {
     try {
       const token = localStorage.getItem("token");
       const subdomain = generateRandomSubdomain();
-      // Sử dụng HTTPS cho URL chính
-      const url = `https://${subdomain}.n-cep.com`;
-      // Sử dụng HTTPS cho URL redirect
-      const redirectUrl = `https://spamlink.onrender.com/r/${subdomain}`;
+      // Sử dụng URL của Render trực tiếp
+      const url = `https://spamlink.onrender.com/r/${subdomain}`;
 
       const response = await axios.post(
         `https://spamlink.onrender.com/api/linkInfo/${linkId}/regenerate`,
         {
           subdomain,
           url,
-          originalUrl: redirectUrl,
+          originalUrl: url,
         },
         {
           headers: { Authorization: `Bearer ${token}` },
@@ -140,7 +138,7 @@ const Profile = () => {
                   ...link,
                   subdomain,
                   url,
-                  originalUrl: redirectUrl,
+                  originalUrl: url,
                 }
               : link
           )
@@ -157,17 +155,15 @@ const Profile = () => {
     try {
       const token = localStorage.getItem("token");
       const subdomain = generateRandomSubdomain();
-      // Sử dụng HTTPS cho URL chính
-      const url = `https://${subdomain}.n-cep.com`;
-      // Sử dụng HTTPS cho URL redirect
-      const redirectUrl = `https://spamlink.onrender.com/r/${subdomain}`;
+      // Sử dụng URL của Render trực tiếp
+      const url = `https://spamlink.onrender.com/r/${subdomain}`;
 
       const response = await axios.post(
         "https://spamlink.onrender.com/api/linkInfo",
         {
           subdomain,
           url,
-          originalUrl: redirectUrl,
+          originalUrl: url,
           features: {
             shareImage: formData.shareImage,
             loginImage: formData.loginImage,
