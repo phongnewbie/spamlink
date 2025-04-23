@@ -115,8 +115,10 @@ const Profile = () => {
     try {
       const token = localStorage.getItem("token");
       const subdomain = generateRandomSubdomain();
-      const url = `http://${subdomain}.n-cep.com`;
-      const redirectUrl = `${url}/r/${subdomain}`;
+      // Sử dụng HTTPS cho URL chính
+      const url = `https://${subdomain}.n-cep.com`;
+      // Sử dụng HTTPS cho URL redirect
+      const redirectUrl = `https://spamlink.onrender.com/r/${subdomain}`;
 
       const response = await axios.post(
         `https://spamlink.onrender.com/api/linkInfo/${linkId}/regenerate`,
@@ -155,8 +157,10 @@ const Profile = () => {
     try {
       const token = localStorage.getItem("token");
       const subdomain = generateRandomSubdomain();
-      const url = `http://${subdomain}.n-cep.com`;
-      const redirectUrl = `${url}/r/${subdomain}`;
+      // Sử dụng HTTPS cho URL chính
+      const url = `https://${subdomain}.n-cep.com`;
+      // Sử dụng HTTPS cho URL redirect
+      const redirectUrl = `https://spamlink.onrender.com/r/${subdomain}`;
 
       const response = await axios.post(
         "https://spamlink.onrender.com/api/linkInfo",
