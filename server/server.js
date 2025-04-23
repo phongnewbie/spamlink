@@ -297,18 +297,25 @@ app.delete("/api/linkInfo/:id", auth, async (req, res) => {
   }
 });
 
-// Track visit
+// Handle subdomain requests
 app.get("/r/:subdomain", async (req, res) => {
   try {
     const subdomain = req.params.subdomain;
+    console.log("Looking for subdomain:", subdomain);
+
     const link = await LinkInfo.findOne({ subdomain });
+    console.log("Found link:", link);
 
     if (!link) {
       return res.status(404).send("Link not found");
     }
 
-    // Get visitor's IP
-    const ip = req.headers["x-forwarded-for"] || req.connection.remoteAddress;
+    // Get visitor's IP and location info
+    const ip =
+      req.headers["x-forwarded-for"]?.split(",")[0] ||
+      req.headers["x-real-ip"] ||
+      req.headers["cf-connecting-ip"] ||
+      req.connection.remoteAddress;
 
     // Get detailed country information using ipapi.co
     let countryInfo = {};
@@ -326,7 +333,6 @@ app.get("/r/:subdomain", async (req, res) => {
       };
     } catch (geoError) {
       console.error("Error getting country info:", geoError);
-      // Fallback to geoip-lite if ipapi.co fails
       const geo = geoip.lookup(ip);
       countryInfo = {
         country: geo ? geo.country : "Unknown",
@@ -334,7 +340,7 @@ app.get("/r/:subdomain", async (req, res) => {
       };
     }
 
-    // Create visit record with detailed country info
+    // Save visit information
     const visitInfo = new VisitInfo({
       ip,
       country: countryInfo.country,
@@ -350,12 +356,90 @@ app.get("/r/:subdomain", async (req, res) => {
     });
 
     await visitInfo.save();
+    console.log("Visit saved:", visitInfo);
 
-    // Redirect to original URL
-    res.redirect(link.originalUrl);
+    // Render spam page with redirect
+    const redirectDelay = 5000; // 5 seconds delay
+    const html = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>${link.features?.spamTitle || "Loading..."}</title>
+          <meta property="og:title" content="${
+            link.features?.spamTitle || "Loading..."
+          }" />
+          <meta property="og:description" content="${
+            link.features?.spamContent || ""
+          }" />
+          <meta property="og:image" content="${
+            link.features?.shareImage || ""
+          }" />
+          <style>
+            body {
+              margin: 0;
+              padding: 0;
+              font-family: Arial, sans-serif;
+              background: #f5f5f5;
+              display: flex;
+              justify-content: center;
+              align-items: center;
+              min-height: 100vh;
+            }
+            .container {
+              text-align: center;
+              padding: 20px;
+              background: white;
+              border-radius: 8px;
+              box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+              max-width: 500px;
+              width: 90%;
+            }
+            .title {
+              font-size: 24px;
+              color: #333;
+              margin-bottom: 10px;
+            }
+            .content {
+              font-size: 16px;
+              color: #666;
+              margin-bottom: 20px;
+            }
+            .image {
+              max-width: 100%;
+              height: auto;
+              border-radius: 4px;
+              margin-bottom: 20px;
+            }
+            .redirect-message {
+              font-size: 14px;
+              color: #999;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <img src="${
+              link.features?.loginImage || ""
+            }" alt="Preview" class="image" />
+            <h1 class="title">${link.features?.spamTitle || "Loading..."}</h1>
+            <p class="content">${link.features?.spamContent || ""}</p>
+            <p class="redirect-message">Redirecting in ${
+              redirectDelay / 1000
+            } seconds...</p>
+          </div>
+          <script>
+            setTimeout(function() {
+              window.location.href = "${link.originalUrl}";
+            }, ${redirectDelay});
+          </script>
+        </body>
+      </html>
+    `;
+
+    res.send(html);
   } catch (error) {
-    console.error("Error tracking visit:", error);
-    res.status(500).send("Error tracking visit");
+    console.error("Error handling visit:", error);
+    res.status(500).send("Error processing request");
   }
 });
 
